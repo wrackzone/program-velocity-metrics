@@ -3,6 +3,10 @@ program-velocity-metrics
 
 ## Overview
 
+Series of charts showing history of planned .v. completed program increment features.
+
+![screenshot](https://github.com/wrackzone/program-velocity-metrics/blob/master/program-velocity-metrics.png?raw=true)
+
 
 ## License
 
