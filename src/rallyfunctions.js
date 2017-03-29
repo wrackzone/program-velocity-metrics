@@ -173,7 +173,7 @@ Ext.define("RallyFunctions", function() {
                         self._loadAStoreWithAPromise('Release',
                             true,
                             [{property:"ReleaseDate",operator:">",value:self.getLastYearDate()},
-                             {property:"ReleaseDate",operator:"<=",value:self.getToday()}
+                             {property:"ReleaseStartDate",operator:"<=",value:self.getToday()}
                             ],
                             {
                                 project : project.get("_ref"),

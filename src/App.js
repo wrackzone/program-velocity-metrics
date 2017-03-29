@@ -31,11 +31,14 @@ Ext.define('CustomApp', {
     launch: function() {
 
     	var that = this;
+
+
         that.rallyFunctions = Ext.create("RallyFunctions",{ 
             ctx : that.getContext(),
         	keys : ['peValues','iterations','projects','projectReleases','piTypes']
         });
 
+        that.showMask("Loading release data...");
         that.rallyFunctions.readRallyItems(function(error,bundle){
         	console.log("rallyFunctions",error,bundle);
             that.bundle = bundle;
@@ -48,6 +51,7 @@ Ext.define('CustomApp', {
         // read project release feature snapshots
         // data structure project -> release -> start snapshots, end snapshots
         var that = this;
+        that.showMask("Loading snapshots...");
 
         var prs = _.sortBy(that.bundle.projectReleases,function(pr) {
             return pr.project.get("Name");
@@ -64,34 +68,24 @@ Ext.define('CustomApp', {
         async.map(reqs, 
             that._asyncLoadSnapshotsForReleaseDate.bind(that), 
             function(error,results) {
+                that.hideMask();
                 that._showTable();
             }
         )
 
-        // Deft.Promise.map( prs,function(pr){
-        //     var deferred = new Deft.Deferred();
-        //     Deft.Promise.map( pr.releases, function(lr) {
-        //         var deferred1 = new Deft.Deferred();
-        //         Deft.Promise.map( [true,false], function(start) {
-        //             return that._loadSnapshotsForReleaseDate(start,lr);
-        //         }).then({
-        //             success : function(results) {
-        //                 deferred1.resolve();
-        //             }
-        //         });
-        //     return deferred1.promise;
-        //     }).then({
-        //         success : function(results) {
-        //             deferred.resolve();
-        //         }
-        //     })
-        //     return deferred.promise;
-        // }).then({
-        //     success: function(results) {
-        //         that._showTable();
-        //     }
-        // })
+        
     },
+
+    showMask: function(msg) {
+        if ( this.getEl() ) { 
+            this.getEl().unmask();
+            this.getEl().mask(msg);
+        }
+    },
+    hideMask: function() {
+        this.getEl().unmask();
+    },
+
 
     _showTable : function() {
 
@@ -162,6 +156,7 @@ Ext.define('CustomApp', {
 
     _makeRow : function(pr,key) {
         var that = this;
+        console.log("pr",pr);
         var row = { project : pr.project.get("Name"), key : key };
 
         _.each(that.bundle.uniqReleases, function(ur) {
@@ -322,7 +317,23 @@ Ext.define('CustomApp', {
                 store, data.rowKeys, 'release', project, ytitle
             ));
             // that.add(chart);
-            charts.push(chart);
+            // charts.push(chart);
+            // that.add(chart);
+            if (charts.length==0) { // first chart, add it to a full width container
+                charts.push(
+                    Ext.create('Ext.Container', {
+                        "xtype": "container",
+                        "layout":
+                        {
+                           "type": "vbox",
+                           "align": "stretch"
+                        },
+                    // "height": "100%",
+                    "items": [chart]
+                }));
+            } else {
+                charts.push(chart);
+            }
         })
         return charts;
 
