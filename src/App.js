@@ -287,6 +287,28 @@ Ext.define('CustomApp', {
         return { rows : rows, rowKeys : uniqRowKeys };
     },
 
+    _calcMaxMin : function(rows,releaseColumns) {
+
+        // group the rows by project
+        var projectRows = _.groupBy( rows, function(row) { return row.project; });
+
+        // calc min and max of child projects in order to set the chart scaling properly
+        var childProjects = _.keys(projectRows).slice(1); // list of projects except the first one.
+        console.log("childProjects",childProjects);
+        var cpValues = _.map(childProjects,function(cpName) {
+            var prs = projectRows[cpName];
+            return _.map(prs, function(s) {
+                return _.map(releaseColumns,function(rc){
+                    return s[rc];
+                })
+            })
+        });
+        console.log("cpValues",cpValues);
+        cpValues = _.compact(_.flatten(cpValues));
+        console.log("cpValues",cpValues);
+        return { max : _.max(cpValues), min : _.min(cpValues) };
+    },
+
 
     _createCharts : function(rows,keys,releaseColumns) {
 
@@ -300,9 +322,20 @@ Ext.define('CustomApp', {
             case 'Planned Points' : ytitle = 'Points'; break;
         }
 
+        var maxmin = that._calcMaxMin(rows,releaseColumns);
 
         // group the rows by project
         var projectRows = _.groupBy( rows, function(row) { return row.project; });
+
+        // calc min and max of child projects in order to set the chart scaling properly
+        var childProjects = _.keys(projectRows).slice(1); // list of projects except the first one.
+        var cpValues = _.map(childProjects,function(cpName) {
+            var pr = projectRows[cpName];
+            return _.map(keys,function(k) {
+                return pr[k];
+            })
+        });
+        console.log("cpValues",cpValues);
 
         _.each(_.keys(projectRows),function(project,index) {
             var prs = projectRows[project];
@@ -313,7 +346,7 @@ Ext.define('CustomApp', {
                 data : data.rows
             })
             var chart = Ext.create("Ext.chart.Chart", that._createChartConfig(
-                store, data.rowKeys, 'release', project, ytitle, index
+                store, data.rowKeys, 'release', project, ytitle, index, maxmin
             ));
             // that.add(chart);
             // charts.push(chart);
@@ -338,7 +371,7 @@ Ext.define('CustomApp', {
 
     },
 
-    _createChartConfig : function(store,fields,labelField,xtitle,ytitle,index) {
+    _createChartConfig : function(store,fields,labelField,xtitle,ytitle,index,maxmin) {
         var config = {
             // renderTo: Ext.getBody(),
             theme:'ColumnTheme',    
@@ -356,7 +389,7 @@ Ext.define('CustomApp', {
                 title: ytitle,
                 labelTitle: { font: '11px Arial' },
                 grid: true,
-                minimum: 0
+                // minimum: 0
             }, {
                 type: 'Category',
                 position: 'bottom',
@@ -384,6 +417,10 @@ Ext.define('CustomApp', {
                     orientation: 'horizontal',
                     color: '#333'
             }
+        } else {
+            // set the max / min scaling.
+            config.axes[0].maximum = maxmin.max;
+            config.axes[0].minimum = 0;
         }
         return config;
 
