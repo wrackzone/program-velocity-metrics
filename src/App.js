@@ -156,7 +156,6 @@ Ext.define('CustomApp', {
 
     _makeRow : function(pr,key) {
         var that = this;
-        console.log("pr",pr);
         var row = { project : pr.project.get("Name"), key : key };
 
         _.each(that.bundle.uniqReleases, function(ur) {
@@ -254,12 +253,12 @@ Ext.define('CustomApp', {
             } );
         });
 
-        var grid = new Ext.grid.GridPanel({
-            store: store,
+        var grid = new Ext.grid.GridPanel( {
+            store: store, 
             columns: gridColumns,
             stripeRows: true,
             title:'Program Release Metrics',
-        });
+        } );
 
         var charts = that._createCharts(_.filter(rows,function(row){
             return _.contains(keys,row.key)
@@ -305,7 +304,7 @@ Ext.define('CustomApp', {
         // group the rows by project
         var projectRows = _.groupBy( rows, function(row) { return row.project; });
 
-        _.each(_.keys(projectRows),function(project) {
+        _.each(_.keys(projectRows),function(project,index) {
             var prs = projectRows[project];
             var data = that._transposeJson(prs,"key",releaseColumns,"release");
             var fields = ['release'].concat(data.rowKeys);
@@ -314,7 +313,7 @@ Ext.define('CustomApp', {
                 data : data.rows
             })
             var chart = Ext.create("Ext.chart.Chart", that._createChartConfig(
-                store, data.rowKeys, 'release', project, ytitle
+                store, data.rowKeys, 'release', project, ytitle, index
             ));
             // that.add(chart);
             // charts.push(chart);
@@ -339,8 +338,8 @@ Ext.define('CustomApp', {
 
     },
 
-    _createChartConfig : function(store,fields,labelField,xtitle,ytitle) {
-        return {
+    _createChartConfig : function(store,fields,labelField,xtitle,ytitle,index) {
+        var config = {
             // renderTo: Ext.getBody(),
             theme:'ColumnTheme',    
             width: 300,
@@ -369,11 +368,25 @@ Ext.define('CustomApp', {
             series: [{
                 type: 'column',
                 axis: 'left',
-                // highlight: true,
+                highlight: true,
                 xField: labelField,
                 yField: fields
             }]
         }
+
+        // add a label for the first chart
+        if (index==0) {
+            console.log("ChartConfig",_.map(fields,function(f){return " "+f}))
+            config.series[0].label = {
+                    display: 'outside',
+                    field: fields,
+                    renderer: Ext.util.Format.numberRenderer('0'),
+                    orientation: 'horizontal',
+                    color: '#333'
+            }
+        }
+        return config;
+
     },
 
     _getIterationDateForRelease : function(release) {
@@ -402,9 +415,9 @@ Ext.define('CustomApp', {
             return _.last(s);
         })
 
-        console.log(_.map(lSnapshots,function(s){
-            return s.FormattedID;
-        }))
+        // console.log(_.map(lSnapshots,function(s){
+        //     return s.FormattedID;
+        // }))
         return lSnapshots;
 
     },
