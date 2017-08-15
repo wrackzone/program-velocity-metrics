@@ -1,3 +1,29 @@
+
+function standardDeviation(values){
+  var avg = average(values);
+  
+  var squareDiffs = values.map(function(value){
+    var diff = value - avg;
+    var sqrDiff = diff * diff;
+    return sqrDiff;
+  });
+  
+  var avgSquareDiff = average(squareDiffs);
+
+  var stdDev = Math.sqrt(avgSquareDiff);
+  return stdDev;
+}
+
+function average(data){
+  var sum = data.reduce(function(sum, value){
+    return sum + value;
+  }, 0);
+
+  var avg = sum / data.length;
+  return avg;
+}
+
+
  Ext.define('Ext.chart.theme.ColumnTheme', {
     extend: 'Ext.chart.theme.Base',
     constructor: function(config) {
@@ -306,6 +332,7 @@ Ext.define('CustomApp', {
         console.log("cpValues",cpValues);
         cpValues = _.compact(_.flatten(cpValues));
         console.log("cpValues",cpValues);
+        console.log("stddev",standardDeviation(cpValues));
         return { max : _.max(cpValues), min : _.min(cpValues) };
     },
 
@@ -474,7 +501,11 @@ Ext.define('CustomApp', {
 
             dt = Rally.util.DateTime.toIsoString(dt, false);
         } else {
-            dt = _.first(req.logicalRelease.releases).raw.ReleaseDate
+
+            // dt = _.first(req.logicalRelease.releases).raw.ReleaseDate
+            // use the current date to reflect items that may have been colmpleted after
+            // the release ended.
+            dt = new Date().toIsoString();
         }
 
         Ext.create('Rally.data.lookback.SnapshotStore', {
